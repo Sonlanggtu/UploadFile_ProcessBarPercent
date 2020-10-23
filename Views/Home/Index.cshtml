@@ -1,0 +1,83 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+<link href="~/plugin/toastr.js/toastr.css" rel="stylesheet" />
+<div>
+    <input type="file" id="file" />
+    <input type="button" id="btnUpload" value="Upload" />
+</div>
+<br />
+<div class="row">
+    <div class="col-md-2 text-center" style="color: seagreen" id="percent">
+    </div>
+</div>
+<div>
+    <progress id="fileProgress" style="display: none"></progress>
+</div>
+<hr />
+<span id="lblMessage" style="color: Green"></span>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+<script src="~/plugin/toastr.js/toastr.min.js"></script>
+<script type="text/javascript">
+    $("body").on("click", "#btnUpload", function () {
+        var formData = new FormData();
+        formData.append("source", $("#file")[0].files[0]);
+        $.ajax({
+            url: '/api/UploadFile/UploadVideo',
+            type: 'POST',
+            data: formData,
+            cache: false,
+            contentType: false,
+            processData: false,
+            success: function (pathFile) {
+                console.log("success func >>>");
+                console.log(pathFile);
+                toastr.options.progressBar = true;
+                toastr.options.timeOut = 3000;
+                toastr.success("Upload File Success");
+                $("#lblMessage").show();
+                $("#lblMessage").html("<b> Upload File Success! Path File:" + pathFile + "</b>");
+            },
+            error: function (res) {
+                $('#percent').hide();
+                $("#fileProgress").hide();
+                $('#lblMessage').hide();
+                console.log("error func >>>> ");
+                toastr.options.progressBar = true;
+                toastr.options.timeOut = 3000;
+                toastr.error(res.responseText);
+                return;
+
+
+            },
+            xhr: function (e) {
+                var fileXhr = $.ajaxSettings.xhr();
+                if (fileXhr.upload) {
+                    $('#percent').show();
+                    $("progress").show();
+                    fileXhr.upload.addEventListener("progress", function (e) {
+                        if (e.lengthComputable) {
+                            var valuePercent = ((e.loaded / e.total) * 100).toFixed(2);
+                            console.log("loaded >> " + e.loaded + "| total >> " + e.total + "| phan tram >> " + valuePercent );
+                            $('#percent').html(valuePercent + '%');
+                            $("#fileProgress").attr({
+                                value: e.loaded,
+                                max: e.total
+                            });
+                        }
+                    }, false);
+                } else {
+                    console.log("error func >>>> ");
+                    $('#percent').hide();
+                    $("#fileProgress").hide();
+                    $('#lblMessage').hide();
+                    toastr.options.progressBar = true;
+                    toastr.options.timeOut = 3000;
+                    toastr.error(e);
+                    return;
+                }
+                return fileXhr;
+            }
+        });
+    });
+</script>
